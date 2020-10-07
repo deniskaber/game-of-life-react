@@ -1,0 +1,12 @@
+@import "../styles/variables";
+
+.cell {
+    height: 20px;
+    width: 20px;
+    background-color: $dead-cell-color;
+    padding: 0;
+}
+
+.alive-cell {
+    background-color: $alive-cell-color;
+}

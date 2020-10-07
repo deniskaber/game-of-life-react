@@ -1,0 +1,15 @@
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.controls-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.controls-button {
+    height: 40px;
+    width: 80px;
+}
