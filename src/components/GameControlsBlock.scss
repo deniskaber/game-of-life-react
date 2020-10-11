@@ -1,0 +1,9 @@
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    & + .controls-container {
+        margin-top: 16px;
+    }
+}
