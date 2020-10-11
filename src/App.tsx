@@ -6,14 +6,17 @@ import {
     generateBeaconPreset,
     generateGliderPreset,
     generatePulsarPreset,
+    getFieldKey,
     SupportedTemplate,
     updateGameStep,
 } from "./gameService";
 import "./App.scss";
+import useWindowSize from "./hooks/useWindowSize";
 
 const CELL_SIZE = 24; // size of 1 cell in pixels. Should be aligned with styles
 const MAX_CELLS_TO_DISPLAY = 25; // amount of cells to display on big screens
-const SIMULATION_STEP_INTERVAL = 1000; // time interval before next step in milliseconds
+const SIMULATION_STEP_INTERVAL = 500; // time interval before next step in milliseconds
+const AMOUNT_OF_HISTORY_RECORDS_TO_STORE = 1000;
 
 const initFieldSize = (): number => {
     const amountOfCellsToDisplayOnThisDevice = Math.floor(window.innerWidth / CELL_SIZE);
@@ -23,17 +26,20 @@ const initFieldSize = (): number => {
         : amountOfCellsToDisplayOnThisDevice;
 };
 
-function App() {
+const App: React.FC<{}> = () => {
     const [fieldSize, setFieldSize] = useState<number>(initFieldSize);
     const [field, setField] = useState<Field>({});
     const [isGameActive, setIsGameActive] = useState(false);
     const [history, setHistory] = useState<Field[]>([]);
+    const windowSize = useWindowSize();
+    const [maxFieldSize, setMaxFieldSize] = useState(fieldSize);
 
     const calculateNextStep = useCallback(() => {
         const { updatedField, aliveCellsCount } = updateGameStep(field, fieldSize);
 
         setField(updatedField);
-        setHistory((prevHistory) => [...prevHistory, field]);
+        // game cycle can be indefinite, se we cannot possible track all history.
+        setHistory((prevHistory) => [...prevHistory.slice(-AMOUNT_OF_HISTORY_RECORDS_TO_STORE), field]);
 
         if (aliveCellsCount === 0) {
             setIsGameActive(false);
@@ -53,16 +59,27 @@ function App() {
         };
     }, [isGameActive, calculateNextStep]);
 
+    useEffect(() => {
+        const amountOfCellsToDisplayOnThisDevice = Math.floor(windowSize.width / CELL_SIZE);
+        setMaxFieldSize(amountOfCellsToDisplayOnThisDevice);
+    }, [windowSize.width]);
+
     const handleCellClick = useCallback(({ x, y }: { x: number; y: number }) => {
         setField((prevValue) => {
             return {
                 ...prevValue,
-                [`${x}_${y}`]: true,
+                [getFieldKey(x, y)]: true,
             };
         });
         // FIXME: does user interaction considered to be a new generation???
         // If so, we should create a new history record here
     }, []);
+
+    const handleClickReset = () => {
+        setField({});
+        setHistory([]);
+        setIsGameActive(false);
+    };
 
     const handleAddTemplate = (template: SupportedTemplate) => {
         let updatedField: Field | undefined;
@@ -107,13 +124,37 @@ function App() {
         setHistory(history.filter((item) => item !== previousState));
     };
 
+    const handleAddRow = () => {
+        setFieldSize((prevValue) => prevValue + 1);
+    };
+
+    const handleRemoveRow = () => {
+        setFieldSize((prevValue) => prevValue - 1);
+    };
+
     return (
         <main className="page-layout">
             <GameControlsBlock>
-                <span className="controls-label">Start / stop game</span>
-                <button className="controls-button" onClick={() => setIsGameActive(!isGameActive)}>
-                    {!isGameActive ? "Start" : "Stop"}
-                </button>
+                <span className="controls-label">Simulation</span>
+                <div>
+                    <button className="controls-button" onClick={() => setIsGameActive(!isGameActive)}>
+                        {!isGameActive ? "Start" : "Stop"}
+                    </button>
+                    <button className="controls-button" onClick={handleClickReset}>
+                        Reset
+                    </button>
+                </div>
+            </GameControlsBlock>
+            <GameControlsBlock>
+                <span className="controls-label">Field size</span>
+                <div>
+                    <button className="controls-button" disabled={fieldSize >= maxFieldSize} onClick={handleAddRow}>
+                        Increase
+                    </button>
+                    <button className="controls-button" disabled={fieldSize < 2} onClick={handleRemoveRow}>
+                        Decrease
+                    </button>
+                </div>
             </GameControlsBlock>
             <GameControlsBlock>
                 <span className="controls-label">Generations</span>
@@ -143,6 +184,6 @@ function App() {
             <GameField fieldSize={fieldSize} field={field} onCellClick={handleCellClick} />
         </main>
     );
-}
+};
 
 export default App;

@@ -6,7 +6,7 @@ export enum SupportedTemplate {
     beacon = "beacon",
 }
 
-const getFieldKey = (x: number, y: number): string => `${x}_${y}`;
+export const getFieldKey = (x: number, y: number): string => x + "_" + y;
 
 export const getNeighbourCellCoordinate = (currentValue: number, shift: number, fieldSize: number): number => {
     // FIXME there is an edge case when shift > fieldSize
@@ -82,7 +82,9 @@ export const updateGameStep = (
                 aliveCellsCount += 1;
             }
 
-            updatedField[key] = newIsAlive;
+            if (newIsAlive) {
+                updatedField[key] = newIsAlive;
+            }
         }
     }
 

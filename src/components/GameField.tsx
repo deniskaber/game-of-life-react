@@ -1,6 +1,7 @@
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useCallback, useMemo } from "react";
 import { Cell } from "./Cell";
 import "./GameField.scss";
+import { getFieldKey } from "../gameService";
 
 type Props = {
     fieldSize: number;
@@ -9,22 +10,25 @@ type Props = {
 };
 
 const GameField: React.FC<Props> = ({ fieldSize, field, onCellClick }) => {
-    const handleCellClick = (e: MouseEvent) => {
-        const targetId = (e.target as HTMLTableCellElement).id;
-        const [x, y] = targetId.split("_");
+    const handleCellClick = useCallback(
+        (e: MouseEvent) => {
+            const targetId = (e.target as HTMLTableCellElement).id;
+            const [x, y] = targetId.split("_");
 
-        onCellClick({ x: Number(x), y: Number(y) });
-    };
+            onCellClick({ x: Number(x), y: Number(y) });
+        },
+        [onCellClick],
+    );
 
-    const fieldSizeArray = new Array(fieldSize).fill(null);
+    const fieldSizeArray = useMemo(() => new Array(fieldSize).fill(null), [fieldSize]);
 
     return (
         <table className="game-field" onClick={handleCellClick}>
             <tbody>
                 {fieldSizeArray.map((_, x) => {
                     const cells = fieldSizeArray.map((_, y) => {
-                        const id = `${x}_${y}`;
-                        return <Cell key={id} id={id} isAlive={field[`${x}_${y}`]} />;
+                        const id = getFieldKey(x, y);
+                        return <Cell key={id} id={id} isAlive={field[id]} />;
                     });
 
                     return <tr key={x}>{cells}</tr>;
