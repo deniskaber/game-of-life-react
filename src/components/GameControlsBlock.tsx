@@ -1,8 +1,6 @@
-import React from "react";
-import "./GameControlsBlock.scss";
+import React from 'react';
+import './GameControlsBlock.scss';
 
-type Props = {};
-
-export const GameControlsBlock: React.FC<Props> = ({ children }) => {
+export const GameControlsBlock: React.FC<{}> = ({ children }) => {
     return <div className="controls-container">{children}</div>;
 };

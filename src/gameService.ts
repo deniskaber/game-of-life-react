@@ -1,12 +1,12 @@
 export type Field = Record<string, boolean>;
 
 export enum SupportedTemplate {
-    glider = "glider",
-    pulsar = "pulsar",
-    beacon = "beacon",
+    glider = 'glider',
+    pulsar = 'pulsar',
+    beacon = 'beacon',
 }
 
-export const getFieldKey = (x: number, y: number): string => x + "_" + y;
+export const getFieldKey = (x: number, y: number): string => x + '_' + y;
 
 export const getNeighbourCellCoordinate = (currentValue: number, shift: number, fieldSize: number): number => {
     // FIXME there is an edge case when shift > fieldSize
@@ -56,7 +56,7 @@ export const getConnectionCount = (x: number, y: number, field: Field, fieldSize
     return count;
 };
 
-export const updateGameStep = (
+export const calculateNextGameState = (
     field: Field,
     fieldSize: number,
 ): {

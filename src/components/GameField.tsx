@@ -1,7 +1,7 @@
-import React, { MouseEvent, useCallback, useMemo } from "react";
-import { Cell } from "./Cell";
-import "./GameField.scss";
-import { getFieldKey } from "../gameService";
+import React, { MouseEvent, useCallback, useMemo } from 'react';
+import { Cell } from './Cell';
+import './GameField.scss';
+import { getFieldKey } from '../gameService';
 
 type Props = {
     fieldSize: number;
@@ -9,11 +9,11 @@ type Props = {
     onCellClick: ({ x, y }: { x: number; y: number }) => void;
 };
 
-const GameField: React.FC<Props> = ({ fieldSize, field, onCellClick }) => {
+export const GameField: React.FC<Props> = ({ fieldSize, field, onCellClick }) => {
     const handleCellClick = useCallback(
         (e: MouseEvent) => {
             const targetId = (e.target as HTMLTableCellElement).id;
-            const [x, y] = targetId.split("_");
+            const [x, y] = targetId.split('_');
 
             onCellClick({ x: Number(x), y: Number(y) });
         },
@@ -37,5 +37,3 @@ const GameField: React.FC<Props> = ({ fieldSize, field, onCellClick }) => {
         </table>
     );
 };
-
-export default GameField;

@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { GameControlsBlock } from "./components/GameControlsBlock";
-import GameField from "./components/GameField";
+import React, { useCallback, useEffect, useState } from 'react';
+import { GameControlsBlock } from './components/GameControlsBlock';
+import { GameField } from './components/GameField';
 import {
     Field,
     generateBeaconPreset,
@@ -8,10 +8,10 @@ import {
     generatePulsarPreset,
     getFieldKey,
     SupportedTemplate,
-    updateGameStep,
-} from "./gameService";
-import "./App.scss";
-import useWindowSize from "./hooks/useWindowSize";
+    calculateNextGameState,
+} from './gameService';
+import useWindowSize from './hooks/useWindowSize';
+import './App.scss';
 
 const CELL_SIZE = 24; // size of 1 cell in pixels. Should be aligned with styles
 const MAX_CELLS_TO_DISPLAY = 25; // amount of cells to display on big screens
@@ -35,7 +35,7 @@ const App: React.FC<{}> = () => {
     const [maxFieldSize, setMaxFieldSize] = useState(fieldSize);
 
     const calculateNextStep = useCallback(() => {
-        const { updatedField, aliveCellsCount } = updateGameStep(field, fieldSize);
+        const { updatedField, aliveCellsCount } = calculateNextGameState(field, fieldSize);
 
         setField(updatedField);
         // game cycle can be indefinite, se we cannot possible track all history.
@@ -43,7 +43,11 @@ const App: React.FC<{}> = () => {
 
         if (aliveCellsCount === 0) {
             setIsGameActive(false);
-            alert("Simulation is finished");
+
+            // show alert after rerender with empty field, when it clean and nice
+            setTimeout(() => {
+                alert('Simulation is finished');
+            });
         }
     }, [fieldSize, field]);
 
@@ -64,7 +68,7 @@ const App: React.FC<{}> = () => {
         setMaxFieldSize(amountOfCellsToDisplayOnThisDevice);
     }, [windowSize.width]);
 
-    const handleCellClick = useCallback(({ x, y }: { x: number; y: number }) => {
+    const handleCellClick = ({ x, y }: { x: number; y: number }) => {
         setField((prevValue) => {
             return {
                 ...prevValue,
@@ -73,7 +77,7 @@ const App: React.FC<{}> = () => {
         });
         // FIXME: does user interaction considered to be a new generation???
         // If so, we should create a new history record here
-    }, []);
+    };
 
     const handleClickReset = () => {
         setField({});
@@ -138,7 +142,7 @@ const App: React.FC<{}> = () => {
                 <span className="controls-label">Simulation</span>
                 <div>
                     <button className="controls-button" onClick={() => setIsGameActive(!isGameActive)}>
-                        {!isGameActive ? "Start" : "Stop"}
+                        {!isGameActive ? 'Start' : 'Stop'}
                     </button>
                     <button className="controls-button" onClick={handleClickReset}>
                         Reset
