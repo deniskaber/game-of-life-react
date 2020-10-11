@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import {GameControlsBlock} from "./components/GameControlsBlock";
+import React, { useCallback, useEffect, useState } from "react";
+import { GameControlsBlock } from "./components/GameControlsBlock";
 import GameField from "./components/GameField";
 import {
     Field,
@@ -13,7 +13,7 @@ import "./App.scss";
 
 const CELL_SIZE = 24; // size of 1 cell in pixels. Should be aligned with styles
 const MAX_CELLS_TO_DISPLAY = 25; // amount of cells to display on big screens
-const SIMULATION_STEP_INTERVAL = 300; // time interval before next step in milliseconds
+const SIMULATION_STEP_INTERVAL = 1000; // time interval before next step in milliseconds
 
 const initFieldSize = (): number => {
     const amountOfCellsToDisplayOnThisDevice = Math.floor(window.innerWidth / CELL_SIZE);
@@ -27,39 +27,45 @@ function App() {
     const [fieldSize, setFieldSize] = useState<number>(initFieldSize);
     const [field, setField] = useState<Field>({});
     const [isGameActive, setIsGameActive] = useState(false);
+    const [history, setHistory] = useState<Field[]>([]);
+
+    const calculateNextStep = useCallback(() => {
+        const { updatedField, aliveCellsCount } = updateGameStep(field, fieldSize);
+
+        setField(updatedField);
+        setHistory((prevHistory) => [...prevHistory, field]);
+
+        if (aliveCellsCount === 0) {
+            setIsGameActive(false);
+            alert("Simulation is finished");
+        }
+    }, [fieldSize, field]);
 
     useEffect(() => {
         let timeoutRef: undefined | number;
 
-        if (isGameActive && fieldSize) {
-            timeoutRef = window.setTimeout(() => {
-                const { updatedField, aliveCellsCount } = updateGameStep(field, fieldSize);
-
-                setField(updatedField);
-
-                if (aliveCellsCount === 0) {
-                    setIsGameActive(false);
-                    alert("Simulation is finished");
-                }
-            }, SIMULATION_STEP_INTERVAL);
+        if (isGameActive) {
+            timeoutRef = window.setTimeout(calculateNextStep, SIMULATION_STEP_INTERVAL);
         }
 
         return () => {
             clearTimeout(timeoutRef);
         };
-    }, [isGameActive, fieldSize, field]);
+    }, [isGameActive, calculateNextStep]);
 
-    const handleCellClick = ({ x, y }: { x: number; y: number }) => {
+    const handleCellClick = useCallback(({ x, y }: { x: number; y: number }) => {
         setField((prevValue) => {
             return {
                 ...prevValue,
                 [`${x}_${y}`]: true,
             };
         });
-    };
+        // FIXME: does user interaction considered to be a new generation???
+        // If so, we should create a new history record here
+    }, []);
 
     const handleAddTemplate = (template: SupportedTemplate) => {
-        let updatedField;
+        let updatedField: Field | undefined;
 
         switch (template) {
             case SupportedTemplate.glider: {
@@ -85,8 +91,20 @@ function App() {
             }
 
             setField(updatedField);
+            setHistory([]);
             setIsGameActive(true);
         }
+    };
+
+    const handleClickNextStep = () => {
+        calculateNextStep();
+    };
+
+    const handleClickPreviousStep = () => {
+        const previousState = history[history.length - 1];
+
+        setField(previousState);
+        setHistory(history.filter((item) => item !== previousState));
     };
 
     return (
@@ -96,6 +114,17 @@ function App() {
                 <button className="controls-button" onClick={() => setIsGameActive(!isGameActive)}>
                     {!isGameActive ? "Start" : "Stop"}
                 </button>
+            </GameControlsBlock>
+            <GameControlsBlock>
+                <span className="controls-label">Generations</span>
+                <div>
+                    <button className="controls-button" disabled={!history.length} onClick={handleClickPreviousStep}>
+                        Previous
+                    </button>
+                    <button className="controls-button" onClick={handleClickNextStep}>
+                        Next
+                    </button>
+                </div>
             </GameControlsBlock>
             <GameControlsBlock>
                 <span className="controls-label">Templates</span>
