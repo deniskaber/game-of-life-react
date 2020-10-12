@@ -2,7 +2,7 @@ import { Reducer } from 'react';
 import { calculateNextGeneration, Field, getFieldKey } from './gameService';
 import { AMOUNT_OF_HISTORY_RECORDS_TO_STORE, CELL_SIZE, MAX_CELLS_TO_DISPLAY } from './config';
 
-const initFieldSize = (): number => {
+export const initFieldSize = (): number => {
     const amountOfCellsToDisplayOnThisDevice = Math.floor(window.innerWidth / CELL_SIZE);
 
     return amountOfCellsToDisplayOnThisDevice > MAX_CELLS_TO_DISPLAY
@@ -41,7 +41,7 @@ export const gameReducer: Reducer<GameState, GameAction> = (state, action: GameA
     switch (action.type) {
         case GameActionType.TriggerNextGeneration: {
             const { fieldState, fieldSize, history } = state;
-            const { updatedField } = calculateNextGeneration(fieldState, fieldSize);
+            const updatedField = calculateNextGeneration(fieldState, fieldSize);
 
             return {
                 ...state,

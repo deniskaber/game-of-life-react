@@ -56,15 +56,8 @@ export const getConnectionCount = (x: number, y: number, field: Field, fieldSize
     return count;
 };
 
-export const calculateNextGeneration = (
-    field: Field,
-    fieldSize: number,
-): {
-    updatedField: Field;
-    aliveCellsCount: number;
-} => {
+export const calculateNextGeneration = (field: Field, fieldSize: number): Field => {
     const updatedField: Field = {};
-    let aliveCellsCount = 0;
 
     for (let x = 0; x < fieldSize; x++) {
         for (let y = 0; y < fieldSize; y++) {
@@ -76,10 +69,8 @@ export const calculateNextGeneration = (
 
             if (isAlive && (connectionCount === 2 || connectionCount === 3)) {
                 newIsAlive = true;
-                aliveCellsCount += 1;
             } else if (!isAlive && connectionCount === 3) {
                 newIsAlive = true;
-                aliveCellsCount += 1;
             }
 
             if (newIsAlive) {
@@ -88,16 +79,13 @@ export const calculateNextGeneration = (
         }
     }
 
-    return {
-        updatedField,
-        aliveCellsCount,
-    };
+    return updatedField;
 };
 
 export const generateGliderPreset = (fieldSize: number): Field | undefined => {
     const field: Field = {};
 
-    if (fieldSize < 3) {
+    if (fieldSize < 5) {
         alert('Unable to add "glider" preset. Field is too small');
         return;
     }
@@ -443,7 +431,7 @@ export const generatePulsarPreset = (fieldSize: number): Field | undefined => {
 export const generateBeaconPreset = (fieldSize: number): Field | undefined => {
     const field: Field = {};
 
-    if (fieldSize < 4) {
+    if (fieldSize < 6) {
         alert('Unable to add "beacon" preset. Field is too small');
         return;
     }

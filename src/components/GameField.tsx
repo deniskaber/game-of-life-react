@@ -23,7 +23,7 @@ export const GameField: React.FC<Props> = ({ fieldSize, field, onCellClick }) =>
     const fieldSizeArray = useMemo(() => new Array(fieldSize).fill(null), [fieldSize]);
 
     return (
-        <table className="game-field" onClick={handleCellClick}>
+        <table className="game-field" data-testid="game-field" onClick={handleCellClick}>
             <tbody>
                 {fieldSizeArray.map((_, x) => {
                     const cells = fieldSizeArray.map((_, y) => {
