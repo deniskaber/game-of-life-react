@@ -2,10 +2,9 @@
 
 Detailed description is [here](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules).
 
-
 ## Demo
-Check online demo [here](https://deniskaber.github.io/game-of-life-react).
 
+Check online demo [here](https://deniskaber.github.io/game-of-life-react).
 
 ## Local setup
 
@@ -17,3 +16,7 @@ To run application locally you should do:
 npm install
 npm start
 ```
+
+### Responsiveness
+
+Warning, application is not fully responsive. You have to refresh the page after changing viewport size.
