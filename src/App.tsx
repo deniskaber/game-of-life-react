@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { GameControlsBlock } from './components/GameControlsBlock';
 import { GameField } from './components/GameField';
 import {
@@ -6,62 +6,38 @@ import {
     generateBeaconPreset,
     generateGliderPreset,
     generatePulsarPreset,
-    getFieldKey,
     SupportedTemplate,
-    calculateNextGameState,
 } from './gameService';
 import useWindowSize from './hooks/useWindowSize';
+import { GameActionType, gameInitialState, gameReducer } from './gameReducer';
+import { CELL_SIZE } from './config';
 import './App.scss';
 
-const CELL_SIZE = 24; // size of 1 cell in pixels. Should be aligned with styles
-const MAX_CELLS_TO_DISPLAY = 25; // amount of cells to display on big screens
 const SIMULATION_STEP_INTERVAL = 500; // time interval before next step in milliseconds
-const AMOUNT_OF_HISTORY_RECORDS_TO_STORE = 1000;
 
-const initFieldSize = (): number => {
-    const amountOfCellsToDisplayOnThisDevice = Math.floor(window.innerWidth / CELL_SIZE);
-
-    return amountOfCellsToDisplayOnThisDevice > MAX_CELLS_TO_DISPLAY
-        ? MAX_CELLS_TO_DISPLAY
-        : amountOfCellsToDisplayOnThisDevice;
-};
-
-const App: React.FC<{}> = () => {
-    const [fieldSize, setFieldSize] = useState<number>(initFieldSize);
-    const [field, setField] = useState<Field>({});
+const App: React.FC = () => {
     const [isGameActive, setIsGameActive] = useState(false);
-    const [history, setHistory] = useState<Field[]>([]);
+    const [state, dispatch] = useReducer(gameReducer, gameInitialState);
+    const [maxFieldSize, setMaxFieldSize] = useState(state.fieldSize);
+
     const windowSize = useWindowSize();
-    const [maxFieldSize, setMaxFieldSize] = useState(fieldSize);
-
-    const calculateNextStep = useCallback(() => {
-        const { updatedField, aliveCellsCount } = calculateNextGameState(field, fieldSize);
-
-        setField(updatedField);
-        // game cycle can be indefinite, se we cannot possible track all history.
-        setHistory((prevHistory) => [...prevHistory.slice(-AMOUNT_OF_HISTORY_RECORDS_TO_STORE), field]);
-
-        if (aliveCellsCount === 0) {
-            setIsGameActive(false);
-
-            // show alert after rerender with empty field, when it clean and nice
-            setTimeout(() => {
-                alert('Simulation is finished');
-            });
-        }
-    }, [fieldSize, field]);
 
     useEffect(() => {
-        let timeoutRef: undefined | number;
+        let intervalRef: undefined | number;
 
         if (isGameActive) {
-            timeoutRef = window.setTimeout(calculateNextStep, SIMULATION_STEP_INTERVAL);
+            intervalRef = window.setInterval(() => {
+                dispatch({
+                    type: GameActionType.TriggerNextGeneration,
+                    payload: null,
+                });
+            }, SIMULATION_STEP_INTERVAL);
         }
 
         return () => {
-            clearTimeout(timeoutRef);
+            clearInterval(intervalRef);
         };
-    }, [isGameActive, calculateNextStep]);
+    }, [isGameActive]);
 
     useEffect(() => {
         const amountOfCellsToDisplayOnThisDevice = Math.floor(windowSize.width / CELL_SIZE);
@@ -69,24 +45,23 @@ const App: React.FC<{}> = () => {
     }, [windowSize.width]);
 
     const handleCellClick = ({ x, y }: { x: number; y: number }) => {
-        setField((prevValue) => {
-            return {
-                ...prevValue,
-                [getFieldKey(x, y)]: true,
-            };
+        dispatch({
+            type: GameActionType.AddAliveCell,
+            payload: { x, y },
         });
-        // FIXME: does user interaction considered to be a new generation???
-        // If so, we should create a new history record here
     };
 
     const handleClickReset = () => {
-        setField({});
-        setHistory([]);
-        setIsGameActive(false);
+        dispatch({
+            type: GameActionType.Reset,
+            payload: null,
+        });
     };
 
     const handleAddTemplate = (template: SupportedTemplate) => {
         let updatedField: Field | undefined;
+
+        const { fieldSize } = state;
 
         switch (template) {
             case SupportedTemplate.glider: {
@@ -105,35 +80,44 @@ const App: React.FC<{}> = () => {
                 break;
         }
 
-        if (updatedField) {
-            const hasValues = Object.values(updatedField).length > 0;
-            if (!hasValues) {
-                return;
-            }
-
-            setField(updatedField);
-            setHistory([]);
-            setIsGameActive(true);
+        if (!updatedField) {
+            return;
         }
+
+        dispatch({
+            type: GameActionType.RunPreset,
+            payload: updatedField,
+        });
+
+        setIsGameActive(true);
     };
 
     const handleClickNextStep = () => {
-        calculateNextStep();
+        dispatch({
+            type: GameActionType.TriggerNextGeneration,
+            payload: null,
+        });
     };
 
     const handleClickPreviousStep = () => {
-        const previousState = history[history.length - 1];
-
-        setField(previousState);
-        setHistory(history.filter((item) => item !== previousState));
+        dispatch({
+            type: GameActionType.GoToPreviousGeneration,
+            payload: null,
+        });
     };
 
     const handleAddRow = () => {
-        setFieldSize((prevValue) => prevValue + 1);
+        dispatch({
+            type: GameActionType.IncreaseFieldSize,
+            payload: null,
+        });
     };
 
     const handleRemoveRow = () => {
-        setFieldSize((prevValue) => prevValue - 1);
+        dispatch({
+            type: GameActionType.DecreaseFieldSize,
+            payload: null,
+        });
     };
 
     return (
@@ -152,10 +136,14 @@ const App: React.FC<{}> = () => {
             <GameControlsBlock>
                 <span className="controls-label">Field size</span>
                 <div>
-                    <button className="controls-button" disabled={fieldSize >= maxFieldSize} onClick={handleAddRow}>
+                    <button
+                        className="controls-button"
+                        disabled={state.fieldSize >= maxFieldSize}
+                        onClick={handleAddRow}
+                    >
                         Increase
                     </button>
-                    <button className="controls-button" disabled={fieldSize < 2} onClick={handleRemoveRow}>
+                    <button className="controls-button" disabled={state.fieldSize < 2} onClick={handleRemoveRow}>
                         Decrease
                     </button>
                 </div>
@@ -163,7 +151,11 @@ const App: React.FC<{}> = () => {
             <GameControlsBlock>
                 <span className="controls-label">Generations</span>
                 <div>
-                    <button className="controls-button" disabled={!history.length} onClick={handleClickPreviousStep}>
+                    <button
+                        className="controls-button"
+                        disabled={!state.history.length}
+                        onClick={handleClickPreviousStep}
+                    >
                         Previous
                     </button>
                     <button className="controls-button" onClick={handleClickNextStep}>
@@ -185,7 +177,7 @@ const App: React.FC<{}> = () => {
                     </button>
                 </div>
             </GameControlsBlock>
-            <GameField fieldSize={fieldSize} field={field} onCellClick={handleCellClick} />
+            <GameField fieldSize={state.fieldSize} field={state.fieldState} onCellClick={handleCellClick} />
         </main>
     );
 };

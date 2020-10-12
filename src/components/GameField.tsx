@@ -1,7 +1,7 @@
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 import { Cell } from './Cell';
-import './GameField.scss';
 import { getFieldKey } from '../gameService';
+import './GameField.scss';
 
 type Props = {
     fieldSize: number;

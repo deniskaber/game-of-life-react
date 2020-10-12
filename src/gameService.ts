@@ -56,7 +56,7 @@ export const getConnectionCount = (x: number, y: number, field: Field, fieldSize
     return count;
 };
 
-export const calculateNextGameState = (
+export const calculateNextGeneration = (
     field: Field,
     fieldSize: number,
 ): {
@@ -94,12 +94,12 @@ export const calculateNextGameState = (
     };
 };
 
-export const generateGliderPreset = (fieldSize: number): Field => {
+export const generateGliderPreset = (fieldSize: number): Field | undefined => {
     const field: Field = {};
 
     if (fieldSize < 3) {
         alert('Unable to add "glider" preset. Field is too small');
-        return field;
+        return;
     }
 
     const middlePoint = {
@@ -126,12 +126,12 @@ export const generateGliderPreset = (fieldSize: number): Field => {
     return field;
 };
 
-export const generatePulsarPreset = (fieldSize: number): Field => {
+export const generatePulsarPreset = (fieldSize: number): Field | undefined => {
     const field: Field = {};
 
     if (fieldSize < 16) {
         alert('Unable to add "pulsar" preset. Field is too small');
-        return field;
+        return;
     }
 
     const middlePoint = {
@@ -440,12 +440,12 @@ export const generatePulsarPreset = (fieldSize: number): Field => {
     return field;
 };
 
-export const generateBeaconPreset = (fieldSize: number): Field => {
+export const generateBeaconPreset = (fieldSize: number): Field | undefined => {
     const field: Field = {};
 
     if (fieldSize < 4) {
         alert('Unable to add "beacon" preset. Field is too small');
-        return field;
+        return;
     }
 
     const middlePoint = {
